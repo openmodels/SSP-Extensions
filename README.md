@@ -22,5 +22,10 @@ prediction.
 
 The results of this process are stored in the `results/` directory.
 
-Finally, the `prepare-growthrates.R` script translates these files
+The `prepare-growthrates.R` script can be used to translate these files
 into the form needed by Mimi PAGE.
+
+The `project.R` script applies the estimate growth rates to baseline
+population and GDP per capita levels to project these out to 2300 by
+region. GDP per capita is reported in 2015 USD and population is
+reported in millions.
