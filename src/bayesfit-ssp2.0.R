@@ -24,7 +24,8 @@ df <- df.gdp.rate.long %>% left_join(df.pop.rate.long, by=c('year', names(df.pop
 df <- subset(df, year != 'Notes' & !is.na(Scenario))
 df$year <- as.numeric(as.character(df$year))
 
-for (model in c("OECD Env-Growth", "IIASA GDP")) {
+for (model in c("IIASA GDP", "OECD Env-Growth")) {
+    print(model)
     for (ssp in 1:5) {
         for (variable in c('gdppc', 'pop')) {
             subdf <- subset(df, Model == model & Scenario == paste0('SSP', ssp))
@@ -40,12 +41,15 @@ for (model in c("OECD Env-Growth", "IIASA GDP")) {
 
             years <- unique(subdf$year)
             weights <- subdf$value.pop[subdf$year == years[1]]
+            weights[is.na(weights)] <- 0
+
             for (yi in 2:length(years)) {
                 subdf$ydiff[subdf$year == years[yi]] <- years[yi] - years[yi-1]
                 subdf$rate.lag[subdf$year == years[yi]] <- subdf$rate[subdf$year == years[yi-1]]
-                subdf$meanrate.lag[subdf$year == years[yi]] <- sum(subdf$rate[subdf$year == years[yi-1]] * weights) / sum(weights)
+                subdf$meanrate.lag[subdf$year == years[yi]] <- sum(subdf$rate[subdf$year == years[yi-1]] * weights, na.rm=T) / sum(!is.na(subdf$rate[subdf$year == years[yi-1]]) * weights)
             }
 
+            weights <- weights[(!is.na(subdf$ydiff) & !is.na(subdf$rate))[subdf$year == years[2]]]
             subdf <- subdf[!is.na(subdf$ydiff) & !is.na(subdf$rate),]
 
             ## Simple Bayesian model
@@ -165,21 +169,18 @@ model {
             dfpred$rate.lb <- subdf$rate
             dfpred$rate.ub <- subdf$rate
 
-            print("A")
-
             rate_lags <- t(matrix(dfpred$rate[dfpred$year == 2095], length(unique(subdf$Region)), 2000))
             for (year in 2100:2300) {
-                print(year)
                 meanrate_lag <- as.numeric(rate_lags %*% weights / sum(weights))
                 rates <- matrix(NA, 2000, length(unique(subdf$Region)))
                 for (rr in 1:length(unique(subdf$Region))) {
-                    print(rr / length(unique(subdf$Region)))
-                    rates[, rr] <- rate_lags[, rr] * (1 - la$converge - la$decay) + meanrate_lag * la$converge
+                    if (year == 2100)
+                        rates[, rr] <- rate_lags[, rr] * (1 - 5 * (la$converge + la$decay)) + 5 * meanrate_lag * la$converge
+                    else
+                        rates[, rr] <- rate_lags[, rr] * (1 - la$converge - la$decay) + meanrate_lag * la$converge
 
-                    print("--")
                     rate.lb <- quantile(rates[, rr], probs=.025)
                     rate.ub <- quantile(rates[, rr], probs=.975)
-                    print("++")
                     dfpred <- rbind(dfpred, data.frame(year, Region=unique(dfpred$Region)[rr], rate=mean(rates[, rr]),
                                                        rate.lb, rate.ub))
                 }
@@ -188,21 +189,19 @@ model {
             }
 
             ## Plot the results
-            print("B")
-
             gp <- ggplot(dfpred, aes(year, rate)) +
-                geom_ribbon(aes(ymin=rate.lb, ymax=rate.ub, fill=region), alpha=.5) +
-                geom_line(aes(colour=region)) +
+                geom_ribbon(aes(ymin=rate.lb, ymax=rate.ub, fill=Region), alpha=.5) +
+                geom_line(aes(colour=Region)) +
                 theme_bw() + xlab(NULL) +
-                scale_colour_discrete(name=NULL) + scale_fill_discrete(name=NULL)
+                guides(fill="none", colour="none")
             if (variable == 'gdppc')
                 gp <- gp + ylab("GDP per capita growth")
             else
                 gp <- gp + ylab("Population growth")
 
-            ggsave(paste0("ssp2.0-", ssp, "-", variable, ".pdf"), gp, width=6, height=4)
+            ggsave(paste0("../figures/ssp2.0-", model, "-SSP", ssp, "-", variable, ".pdf"), gp, width=6, height=4)
 
-            write.csv(dfpred, paste0("ssp2.0-", ssp, "-", variable, ".csv"), row.names=F)
+            write.csv(dfpred, paste0("../results/ssp2.0-", model, "-SSP", ssp, "-", variable, ".csv"), row.names=F)
         }
     }
 }
