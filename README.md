@@ -21,7 +21,7 @@ fits the convergence and decay rates under that yearly process, and
 (3) keeps track of the full range of Bayesian uncertainty during
 prediction.
 
-The results of this process are stored in the `results/` directory. For the SSP 2.0 version, results are provided separately for the IIASA GDP and OECD Growth models.
+The results of this process are stored in the `results/` directory. For the SSP 2.0 version, results are provided separately for the IIASA GDP and OECD Env-Growth models.
 
 For the PAGE version, the `prepare-growthrates.R` script can be used to translate these files
 into the form needed by Mimi PAGE.
