@@ -9,11 +9,12 @@ work is currently used by MimiPAGE2020
 
 The process is described in `docs/main.pdf`.
 
-The process starts with SSP projected values from 2015 to 2100,
-according to the regional definitions used by PAGE. These are
-extracted from PAGE-ICE and stored in `data/`.
+The repository contains two parallel sets of code and results. One uses data from the PAGE-ICE model (PAGE version), pre-aggregated to the PAGE region level; the other uses the SSP 2.0 database (https://tntcat.iiasa.ac.at/SspDb/dsd?Action=htmlpage&page=about) directly (SSP 2.0 version).
 
-The script `src/bayesfit.R` applies a Bayesian model to fit the
+The process starts with SSP projected growth rates from 2015 to 2100,
+either according to the regional definitions used by PAGE (PAGE version) or by country (SSP 2.0 version). These files are stored in `data/`.
+
+The script `src/bayesfit.R` (PAGE version) or `src/bayesfit-ssp2.0.R` (SSP 2.0 version) applies a Bayesian model to fit the
 convergent growth equations.  It does this in such a way that it (1)
 recalculates the mean growth rate (for convergence) every year, (2)
 fits the convergence and decay rates under that yearly process, and
@@ -22,10 +23,10 @@ prediction.
 
 The results of this process are stored in the `results/` directory.
 
-The `prepare-growthrates.R` script can be used to translate these files
+For the PAGE version, the `prepare-growthrates.R` script can be used to translate these files
 into the form needed by Mimi PAGE.
 
-The `project.R` script applies the estimate growth rates to baseline
+The `project.R` script (PAGE version) or `project-ssp2.0.R` script (SSP 2.0 version) applies the estimate growth rates to baseline
 population and GDP per capita levels to project these out to 2300 by
-region. GDP per capita is reported in 2015 USD and population is
-reported in millions.
+region. For the PAGE version, GDP per capita is reported in 2015 USD and population is
+reported in millions. For the SSP 2.0 version, GDP per capita is reported in 2005 USD and population is reported in millions.
